@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: npm-install-and-test
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: install
+      image: node:18-alpine
+      workingDir: $(workspaces.source.path)
+      command: ["npm", "install"]
+    - name: test
+      image: node:18-alpine
+      workingDir: $(workspaces.source.path)
+      command: ["npx", "jasmine"]
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-image
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: build
+      image: gcr.io/kaniko-project/executor:v1.9.0
+      workingDir: $(workspaces.source.path)
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=Dockerfile
+        - --destination=us.icr.io/tax-calculator-namespace/tax-calculator:latest
